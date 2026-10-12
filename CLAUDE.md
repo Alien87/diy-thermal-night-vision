@@ -80,6 +80,11 @@ upload_speed = 921600
    - Buttons or touch for palette and zoom
    - Battery power: one 18650 cell with a 5V boost converter feeding the board and the camera
 
+## Power build (2026-10-12, in progress)
+- Parts: a 3.7 V 1300 mAh 883048 LiPo, a TP4056 charger with protection, a mini adjustable boost (3.7 → 5–12 V, LED; set to 5.0 V) and an AMS1117-3.3 module (4.75–12 V in, 800 mA).
+- Plan: TP4056 `OUT±` → switch → boost 5 V → P4 5 V pin (the camera runs from its USB VBUS), daughter VIN, and AMS1117 → 3.3 V for the eyepiece display board. All grounds common. This replaces the earlier 18650 idea.
+- Runtime is not yet measured; the rough estimate is 1.5–2 h. The user will take photos while shrinking the wiring and fitting it into the housing, for the GitHub repo.
+
 ## Notes
 - Use Espressif's official IDF components. A third-party MicroPython-style USB library has a known bug where the P4 HS host never detects devices.
 - The camera needs 5V on the Type-A port. Check VBUS is live when debugging enumeration.

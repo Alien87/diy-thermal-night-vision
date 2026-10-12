@@ -122,6 +122,44 @@ On the scope's 7-pin connector used here, those are **pin 3 (CVBS)** and
 **pin 2/4/6 (GND)**. The other pins are power rails (3.5 V, 10.5 V, battery).
 **Don't connect anything to them** until you know what they do.
 
+### Power (in progress)
+
+The build runs from a single LiPo cell. These are the parts being used (all
+cheap modules):
+
+| Part | Used here |
+|---|---|
+| Battery | 3.7 V 1300 mAh LiPo, size 883048 |
+| Charger + protection | TP4056 module **with** protection (the DW01 + dual-MOSFET version with `OUT+`/`OUT−` pads) |
+| 5 V supply | Mini DC-DC boost module, 3.7 V → 5–12 V adjustable, with LED |
+| 3.3 V supply | AMS1117-3.3 step-down module (4.75–12 V in, 800 mA) |
+
+```
+ LiPo ── B+/B− ┐
+               TP4056 (USB charge) ── OUT+/OUT− ── switch ── boost (set to 5.0 V) ──┬── ESP32-P4 5V pin (camera powered from its USB VBUS)
+                                                                                    ├── composite ESP32 5V/VIN pin
+                                                                                    └── AMS1117-3.3 ── eyepiece display board 3.3 V
+ All grounds common.
+```
+
+Notes:
+
+- **Set the boost converter to 5.0 V with a meter before connecting
+  anything.** These adjustable modules often ship set higher, and 9–12 V would
+  destroy the boards.
+- Take the load from the TP4056's **`OUT+`/`OUT−`**, not `B+`/`B−`. Only the
+  `OUT` pads go through the over-discharge protection.
+- The AMS1117 needs about 1.1 V of headroom, so it must run from the 5 V rail,
+  not straight from the battery.
+- Typical TP4056 modules charge at 1 A (set by the `R_PROG` resistor). That's
+  fine for a 1300 mAh cell.
+- Unplug the battery supply, or switch it off, when a board is connected to a
+  PC over USB for flashing. This avoids two 5 V sources fighting each other.
+- **Runtime:** not yet measured. A rough estimate is 1.5–2 hours: about
+  4.8 Wh in the cell, minus boost losses, with the camera, P4, ESP32 and
+  eyepiece together drawing roughly 2–3 W. To measure the real draw, put a
+  USB power meter on the 5 V rail.
+
 ---
 
 ## Software
@@ -274,7 +312,8 @@ format list. Then change the format and resolution that
 
 ## To do
 
-- Battery power: one 18650 cell and a 5 V boost converter for the P4 and camera
+- Battery power: finish and measure the LiPo / TP4056 / boost / AMS1117 setup above
+- Shrink the wiring and fit everything in the scope housing (photos to follow)
 - Zoom (2× digital) on a second button
 - NTSC output: the library supports it, but the interlacing patch was only done for PAL
 

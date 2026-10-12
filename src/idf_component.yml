@@ -1,0 +1,8 @@
+dependencies:
+  idf: ">=5.4"
+  # Local copy of usb_host_uvc 2.6.0 with a patch for the Mini2Plus's
+  # non-sequential frame indices (see LOCAL PATCH in uvc_descriptor_parsing.c)
+  espressif/usb_host_uvc:
+    version: "^2"
+    override_path: "../components/usb_host_uvc"
+  espressif/esp_lcd_gc9a01: "^2"

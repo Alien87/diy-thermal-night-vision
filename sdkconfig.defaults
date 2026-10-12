@@ -1,0 +1,20 @@
+# Project defaults. The generated sdkconfig.<env> is built from these; after
+# changing this file, delete sdkconfig.esp32-p4-nano so it is regenerated.
+
+# Flash: 16 MB GD NOR on the ESP32-P4-NANO
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# PSRAM: 32 MB in-package hex PSRAM, added to the malloc heap
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_SPEED_200M=y
+
+# 1 kHz tick for finer frame timing
+CONFIG_FREERTOS_HZ=1000
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# USB host (from the usb_host_uvc basic_uvc_stream example). UVC configuration
+# descriptors are well over the default 256-byte control transfer limit.
+CONFIG_USB_HOST_CONTROL_TRANSFER_MAX_SIZE=4096
+CONFIG_USB_HOST_HW_BUFFER_BIAS_IN=y

@@ -1,0 +1,11 @@
+# PlatformIO build output
+.pio/
+composite/.pio/
+.vscode/
+
+# Generated per-env ESP-IDF config (regenerated from sdkconfig.defaults*)
+sdkconfig.esp32-p4-*
+*.bak
+
+# Downloaded by the IDF component manager
+managed_components/

@@ -1,0 +1,6 @@
+# ESP32-P4-Pico overrides, layered on sdkconfig.defaults by CMakeLists.txt for
+# the esp32-p4-pico env. After changing this file, delete sdkconfig.esp32-p4-pico.
+
+# This Pico has v1.x silicon (ROM "esp32p4-eco2"); v3.x builds crash in the
+# bootloader. A v1.x build does not run on v3.x chips and vice versa.
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y

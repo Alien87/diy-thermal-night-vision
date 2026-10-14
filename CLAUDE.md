@@ -41,6 +41,7 @@ Build a standalone thermal scope: a USB thermal camera plugged into an ESP32-P4 
          - Each frame is the raw 256×192 luma, sent as 12 chunks (an 8-byte header plus 16 rows = 4104 bytes). The header carries a magic number, frame seq, chunk number, palette and a 16-bit sum checksum.
          - A handshake line (daughter IO4 → P4 GPIO48) goes high when the slave has a buffer loaded. The P4 waits for a rising edge before each chunk.
          - P4: `src/composite_link.c/.h`, SPI3 master at 10 MHz (bring-up; aim for 20). It runs in its own task and drops frames if busy, so it never stalls the LCD. Counters are logged in the 1 s stats line.
+           - `ROTATE_180` (default 1) reverses the frame bytes before sending, because the eyepiece is mounted upside down. **Confirmed on hardware 2026-10-14.** The GC9A01 is not rotated.
            - Pins: **Pico** SCLK 14, MOSI 15, CS 16, handshake 17 (`-DBOARD_ESP32_P4_PICO`, env `esp32-p4-pico`). **NANO** 45/46/47/48.
            - NANO hardware test (2026-10-12): handshake and CS worked, but every chunk was short (1.5k–13k of 32832 clocks at 10 MHz). At 1 MHz about 25% of chunks were corrupt; a couple of frames got through.
            - Suspected cause, from the schematics: GPIO39–48 are a separate I/O domain fed by LDO4, which defaults to 1.8 V. That is below the original ESP32's ~2.5 V input-high threshold, and the daughter's 3.3 V handshake overdrives GPIO48. GPIO45 also gates the SD card power MOSFET (Q1) on both boards. Unconfirmed: measure the NANO header pin `ESP_LDO_VO4`. The temporary wiring was also poor.
@@ -113,7 +114,7 @@ upload_speed = 921600
   - GC9A01 wiring (NANO header): SCLK **20**, MOSI/SDA **21**, CS **22**, DC **23**, RST **32**, BL **33**, VCC 3V3, GND. Pins are defined at the top of `display.c`.
   - NANO pins in use on the board: I2C 7/8, I2S 9–13, C6 SDIO 14–19 and reset 54, Ethernet 28–31/34/35/49–52, UART 37/38, SD 39–44, speaker amp 53. GPIO 34–38 are strapping pins and 24–27 are USB PHY pins.
 - 2026-10-05: clean image confirmed on hardware after the bulk header fix: straight edges, no scan lines. Bilinear scaling kept.
-- Palette button working on hardware (2026-10-05). `src/input.c/.h` polls the BOOT button (GPIO35, active low, 30 ms debounce) and sends `INPUT_EVENT_PALETTE_NEXT`; main cycles white-hot → black-hot → ironbow. Zoom is deferred.
+- Palette button working on hardware (2026-10-05). `src/input.c/.h` polls the BOOT button (GPIO35) and an external push button on GPIO2 to GND (added 2026-10-13, moved from GPIO5 so it fits the case; builds, not yet tested on hardware), both active low with a 30 ms debounce, and sends `INPUT_EVENT_PALETTE_NEXT`; main cycles white-hot → black-hot → ironbow. Zoom is deferred.
 - Current milestone: 6 (remaining: composite output via helper ESP32, battery power, optional zoom, Pico port).
 
 ## Porting to ESP32-P4-Pico (-M = pre-soldered headers)

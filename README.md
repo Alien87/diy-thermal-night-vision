@@ -10,6 +10,8 @@ frame to a second, original ESP32 that turns it into **PAL composite video**.
 That signal drives the micro-display eyepiece of an off-the-shelf digital
 night-vision scope.
 
+![The finished scope: thermal camera on a 3D-printed mount at the front of a digital night-vision scope body](docs/images/Almost%20Finished.jpeg)
+
 ```
  ┌──────────────┐  USB 2.0 HS   ┌──────────────┐  SPI 20 MHz   ┌──────────────┐  CVBS   ┌───────────┐
  │ HIKMICRO     │  NV12 256x192 │ ESP32-P4     │  luma frames  │ ESP32        │  PAL    │ Eyepiece  │
@@ -26,8 +28,9 @@ night-vision scope.
 
 **Status:** working on hardware. The full chain (camera → P4 → round LCD,
 and P4 → ESP32 → composite eyepiece) runs at the camera's full **25 fps**.
-The SPI link runs with zero errors. Battery power and a zoom button are still
-to come.
+The SPI link runs with zero errors. Everything is built into the scope
+housing and runs from an internal LiPo. Still to come: a battery cover, a
+measured runtime and a zoom button. See [Build photos](#build-photos).
 
 ---
 
@@ -162,6 +165,83 @@ Notes:
 
 ---
 
+## Build photos
+
+### First tests
+
+The first version ran on an ESP32-P4-NANO with the camera in its USB-A port
+and a GC9A01 round LCD.
+
+![ESP32-P4-NANO with the thermal camera on a USB-A adapter, wired to a GC9A01 round LCD](docs/images/Original%20P4%20Nano%20Test%20with%20GC9401.jpeg)
+
+The composite ESP32 was then tested on the bench. Its DAC output (yellow wire)
+went straight into the eyepiece's driver board, with the scope taken apart.
+
+![D1 Mini32 wired into the disassembled scope's eyepiece driver board](docs/images/Daughter%20board%20test%20wiring.jpeg)
+
+The test pattern on the eyepiece, in colour and in black and white. The camera
+behind the eyepiece optics makes the photos look soft; the real image is
+sharper.
+
+| Colour | Black and white |
+|---|---|
+| ![Colour test pattern with reticle on the eyepiece](docs/images/Test%20image%20colour.jpeg) | ![Black-and-white test pattern with reticle on the eyepiece](docs/images/Test%20image%20B-W.jpeg) |
+
+### Making the composite ESP32 smaller
+
+The D1 Mini32 board was too big for the housing, so the ESP32 module was
+removed from it with a DIY hot plate (a frying pan, never to be used for food
+again). Only the bare module was kept.
+
+**Flash the composite firmware before you remove the module.** Once it's off
+its carrier board, there's no USB-serial chip to program it with.
+
+| Before | After |
+|---|---|
+| ![D1 Mini32 board on a frying pan used as a hot plate](docs/images/DIY%20hot%20plate.jpeg) | ![Bare ESP32 module lifted off the D1 Mini32 carrier board](docs/images/Removing%20ESP32%20module.jpeg) |
+
+Pads on the underside of the module, used to wire it directly:
+
+![Underside of the ESP32 module with pad labels](docs/images/ESP32%20Daughter%20board%20Pinout.jpeg)
+
+![Bare ESP32 module with flying leads soldered to its pads](docs/images/Daughter%20board%20wiring%20extensions.jpeg)
+
+### Mounting it on the ESP32-P4-Pico
+
+The bare module sits on the back of the Pico, wired with short sleeved leads.
+
+| | |
+|---|---|
+| ![ESP32 module mounted on the back of the ESP32-P4-Pico, front view](docs/images/ESP%20Daughter%20board%20attached%20to%20P4%20Pico%20Front.jpeg) | ![ESP32 module wired to the ESP32-P4-Pico, side view](docs/images/ESP%20Daughter%20board%20attached%20to%20P4%20Pico.jpeg) |
+
+![ESP32 module wired to the ESP32-P4-Pico, another angle](docs/images/ESP%20Daughter%20board%20attached%20to%20P4%20Pico%202.jpeg)
+
+### Fitting it into the scope
+
+The LiPo cell and charger go in the scope's battery compartment, and the Pico
+fits in the tube next to it.
+
+![LiPo battery and charger in the battery compartment, with the ESP32-P4-Pico in the main tube](docs/images/Battery%20and%20P4.jpeg)
+
+![Interior wiring of the scope housing](docs/images/interior%20wiring.jpeg)
+
+![The housing opened up so the wiring can be reached](docs/images/wiring%20accessible%20.jpeg)
+
+![The scope housing, closed](docs/images/housing.jpeg)
+
+### Camera mount
+
+A 3D-printed extension on the front of the scope holds the camera, with a
+USB-C charging socket on the side.
+
+![Fitting the 3D-printed extension, with the USB-C charge socket](docs/images/assembling%20extension.jpeg)
+
+![3D-printed extension and camera mount on the front of the scope](docs/images/3d%20printed%20extension%20and%20mount.jpeg)
+
+![Front view of the camera in its mount; the battery cover still needs printing](docs/images/Front%20view%20-%20need%20to%20print%20battery%20cover.jpeg)
+
+---
+
 ## Software
 
 Two separate PlatformIO projects live in this repo:
@@ -211,7 +291,12 @@ If an upload fails with "No serial data received", hold **BOOT** and tap **EN**.
 ### Using it
 
 - Plug in the camera. The P4 detects it, selects the 256×192 NV12 mode and starts streaming.
-- **BOOT button** on the P4 (GPIO35) cycles **white-hot → black-hot → ironbow**. The composite output follows.
+- **Palette button:** the P4 BOOT button (GPIO35), or an external momentary push button wired from **GPIO2 to GND** (Pico; GPIO2 is not on the NANO header), cycles **white-hot → black-hot → ironbow**. The composite output follows.
+- **Image orientation:** the P4 rotates the composite image 180° before
+  sending it (`ROTATE_180` in [`src/composite_link.c`](src/composite_link.c)),
+  because the eyepiece in this build is mounted upside down. Set it to `0` if
+  yours isn't. The round LCD isn't affected; it has its own setting,
+  `esp_lcd_panel_mirror()` in [`src/display.c`](src/display.c).
 - With no frames from the P4 for one second, the composite ESP32 shows a test
   pattern (colour bars, grey ramp, reticle). In that mode its serial console
   accepts `p` (next palette) and `d` (toggle field dither).
@@ -231,7 +316,7 @@ If an upload fails with "No serial data received", hold **BOOT** and tap **EN**.
 | [`processing.c`](src/processing.c) | Takes the luma (Y) plane, crops a centred 192×192 square, **bilinearly** scales it to 240×240, maps it through a 256-entry RGB565 palette LUT and draws the reticle. |
 | [`display.c`](src/display.c) | GC9A01 over SPI at 40 MHz with two DMA buffers, so the next frame renders while the previous one transfers. |
 | [`composite_link.c`](src/composite_link.c) | SPI master in its own task. Sends each 256×192 luma frame to the composite ESP32. It drops frames rather than ever stalling the LCD. |
-| [`input.c`](src/input.c) | Debounced BOOT button → palette change. |
+| [`input.c`](src/input.c) | Debounced palette buttons (BOOT on GPIO35, external on GPIO2) → palette change. |
 
 The thermal image is only the **luma plane** of the NV12 stream. The camera's
 other modes (YUY2 frames such as 256×344 and 256×196) carry raw temperature
@@ -312,8 +397,8 @@ format list. Then change the format and resolution that
 
 ## To do
 
-- Battery power: finish and measure the LiPo / TP4056 / boost / AMS1117 setup above
-- Shrink the wiring and fit everything in the scope housing (photos to follow)
+- Print a battery cover
+- Measure the battery runtime
 - Zoom (2× digital) on a second button
 - NTSC output: the library supports it, but the interlacing patch was only done for PAL
 

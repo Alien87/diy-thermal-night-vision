@@ -32,6 +32,7 @@
 #define LINK_HOST       SPI3_HOST           // SPI2 drives the LCD
 #define LINK_CLOCK_HZ   (20 * 1000 * 1000)  // ~20 ms per frame (10 MHz gave only 13 fps). Drop to 1 MHz to test bad wiring.
 #define HANDSHAKE_MS    100                 // Give up on a frame if the daughter stays busy this long
+#define ROTATE_180      1                   // Eyepiece is mounted upside down; 0 sends the frame as captured
 
 static const char *TAG = "link";
 
@@ -157,7 +158,15 @@ void composite_link_submit(const uint8_t *luma, int width, int height, uint8_t p
         return;
     }
     s_busy = true;
+#if ROTATE_180
+    // 180 degrees = the whole frame in reverse byte order
+    const uint8_t *src = luma + LINK_WIDTH * LINK_HEIGHT;
+    for (int i = 0; i < LINK_WIDTH * LINK_HEIGHT; i++) {
+        s_frame[i] = *--src;
+    }
+#else
     memcpy(s_frame, luma, LINK_WIDTH * LINK_HEIGHT);
+#endif
     s_palette = palette;
     xTaskNotifyGive(s_task);
 }
